@@ -1,0 +1,15 @@
+{
+  "name": "com.moocanalyzer",
+  "version": "1.0.0",
+  "description": "Back-end service for emotional analysis",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Team 6",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "firebase": "^7.2.1"
+  }
+}
