@@ -1,7 +1,8 @@
 
 var firebase = require("firebase/app");
 const express = require('express') ;
-require("firebase/storage");
+const fs = require('fs');
+const bodyParser = require('body-parser');
 
 const firebaseConfig = {
     apiKey: "AIzaSyChR6FESYhEUOJcJ3TMTZ0PdjF4TSWsfpY",
@@ -14,9 +15,25 @@ const firebaseConfig = {
     measurementId: "G-0SSYP89GV2"
   };
 
+
+
 firebase.initializeApp(firebaseConfig);
 
 const app = express();
+app.use(bodyParser.json());
+
+const keyFilename="./mooc-content-analysis-firebase-adminsdk-o8avo-956b774eda.json"; //replace this with api key file
+const projectId = "mooc-content-analysis" //replace with your project id
+const bucketName = `${projectId}.appspot.com`;
+
+const {Storage} = require('@google-cloud/storage');
+
+const storage = new Storage({projectId, keyFilename});
+
+const fileName = "success.png";
+const uploadTo = 'sample/package.json';
+
+
 
 app.get('/', function(req, res){
     res.send("Hello world!");
@@ -27,31 +44,20 @@ app.post('/', function(req, res){
 
 app.post('/videos/:video_id/users/:user_id/emotions', function(req, res){
 
-    var storageRef = firebase.storage().ref('images').child('image1');
-    // console.log(storageRef);
+    let data = req.body.image;
+    let base64image = data.split(';base64,').pop();
+    // TODO: convert base64 string to image
+    fs.writeFile('success.png', base64image, {encoding: 'base64'}, function(err) {
+        console.log('File created');
+    });
 
-    var uploadTask = storageRef.putString(req.query.image, 'base64', {contentType:'image/png'});
-
-    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, // or 'state_changed'
-  function(snapshot) {
-    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    console.log('Upload is ' + progress + '% done');
-    switch (snapshot.state) {
-      case firebase.storage.TaskState.PAUSED: // or 'paused'
-        console.log('Upload is paused');
-        break;
-      case firebase.storage.TaskState.RUNNING: // or 'running'
-        console.log('Upload is running');
-        break;
-    }
-  }, function(error) {
-    console.log(error);
-}, function() {
-  // Upload completed successfully, now we can get the download URL
-  var downloadURL = uploadTask.snapshot.downloadURL;
-//   console.log(downloadURL);
+storage.bucket(bucketName).upload(fileName,{
+    public:true,
+    metadata: {contentType: 'image/png',cacheControl: "public, max-age=300"}
 });
+
+storage.bucket(bucketName).file(fileName).makePublic();
+
 
     res.json("See the emotions here at time:" + req.query.time + "for the image:");
     
